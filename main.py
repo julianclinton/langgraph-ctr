@@ -112,6 +112,13 @@ def viz_agent(state: AgentState):
     plot_res = plot_predictions.invoke({"file_path": state["file_path"]})
     return {"messages": [f"Viz done: {plot_res}"]}
 
+def report_agent(state: AgentState):
+    print("--- REPORT AGENT WORKING ---")
+    summary_lines = "\n".join(state["messages"])
+    print("\n=== PIPELINE SUMMARY ===")
+    print(summary_lines)
+    return {"messages": ["Report complete."]}
+
 workflow = StateGraph(AgentState)
 
 workflow.add_node("EDA_Expert", eda_agent)
@@ -122,6 +129,37 @@ workflow.set_entry_point("EDA_Expert")
 workflow.add_edge("EDA_Expert", "Statistician")
 workflow.add_edge("Statistician", "Visualization_Expert")
 workflow.add_edge("Visualization_Expert", END)
+
+# To include the Report Agent, simply uncomment the lines below.
+# It will run after the Visualization Expert and print a summary of all messages.
+# workflow.add_node("Report_Agent", report_agent)
+# workflow.add_edge("Visualization_Expert", "Report_Agent")
+# workflow.add_edge("Report_Agent", END)
+
+# from sklearn.linear_model import LinearRegression
+# ...
+# Inside train_ctr_model, replace:
+# model = RandomForestRegressor(n_estimators=100, random_state=42)
+# With:
+# model = LinearRegression()
+
+# Improved error handling:
+# @tool
+# def encode_categorical_data(file_path: str) -> str:
+#     """Encodes categorical variables (like ad_type) into numbers."""
+#     try:
+#         df = pd.read_csv(file_path)
+#     except FileNotFoundError:
+#         return f"Error: File '{file_path}' not found. Please check the file path."
+
+# ... and in the encoder:    
+# le = LabelEncoder()
+# if 'ad_type' in df.columns:
+#     df['ad_type_encoded'] = le.fit_transform(df['ad_type'])
+#     df.to_csv(file_path, index=False)
+#     return "Successfully encoded 'ad_type' to 'ad_type_encoded'."
+# return "Column 'ad_type' not found."
+
 
 app = workflow.compile()
 
